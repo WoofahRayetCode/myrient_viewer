@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myrient Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <h1 class="logo">
+                        <span class="logo-icon">🗂️</span>
+                        Myrient Viewer
+                    </h1>
+                    <div class="header-actions">
+                        <button id="queue-toggle" class="btn btn-secondary">
+                            <span class="queue-icon">📋</span>
+                            Queue (<span id="queue-count">0</span>)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="container">
+                <div class="app-layout">
+                    <!-- File Browser -->
+                    <div class="browser-section">
+                        <div class="browser-header">
+                            <div class="breadcrumb" id="breadcrumb">
+                                <span class="breadcrumb-item active">files</span>
+                            </div>
+                            <div class="browser-controls">
+                                <input type="text" id="search-input" placeholder="Search files..." class="search-input">
+                                <button id="refresh-btn" class="btn btn-secondary" title="Refresh">🔄</button>
+                            </div>
+                        </div>
+
+                        <div class="browser-stats" id="browser-stats">
+                            <span>Loading...</span>
+                        </div>
+
+                        <div class="file-list" id="file-list">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                                <span>Loading directory...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Queue Sidebar -->
+                    <div class="queue-sidebar" id="queue-sidebar">
+                        <div class="queue-header">
+                            <h3>Download Queue</h3>
+                            <div class="queue-actions">
+                                <button id="clear-queue" class="btn btn-danger btn-sm" title="Clear Queue">🗑️</button>
+                                <button id="close-queue" class="btn btn-secondary btn-sm" title="Close">✖️</button>
+                            </div>
+                        </div>
+
+                        <div class="queue-stats" id="queue-stats">
+                            <div class="stat">
+                                <span class="stat-label">Items:</span>
+                                <span class="stat-value" id="queue-items-count">0</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Size:</span>
+                                <span class="stat-value" id="queue-total-size">0 B</span>
+                            </div>
+                        </div>
+
+                        <div class="queue-list" id="queue-list">
+                            <div class="empty-queue">
+                                <span>Queue is empty</span>
+                                <p>Click the + button next to files to add them</p>
+                            </div>
+                        </div>
+
+                        <div class="queue-export" id="queue-export">
+                            <h4>Export Options</h4>
+                            <div class="export-buttons">
+                                <button class="btn btn-primary export-btn" data-format="wget">Wget Script</button>
+                                <button class="btn btn-primary export-btn" data-format="curl">Curl Script</button>
+                                <button class="btn btn-secondary export-btn" data-format="json">JSON</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <span>Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

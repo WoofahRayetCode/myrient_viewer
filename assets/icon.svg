@@ -1,0 +1,38 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="folder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffb300;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg)" stroke="#ffffff" stroke-width="8"/>
+  
+  <!-- Folder icon -->
+  <path d="M140 180 L200 180 L220 200 L360 200 Q380 200 380 220 L380 340 Q380 360 360 360 L160 360 Q140 360 140 340 Z" 
+        fill="url(#folder)" stroke="#ffffff" stroke-width="4"/>
+  
+  <!-- Files inside folder -->
+  <rect x="170" y="220" width="80" height="8" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="170" y="240" width="120" height="8" rx="4" fill="#ffffff" opacity="0.6"/>
+  <rect x="170" y="260" width="100" height="8" rx="4" fill="#ffffff" opacity="0.4"/>
+  
+  <!-- Download arrow -->
+  <g transform="translate(300,280)">
+    <circle cx="20" cy="20" r="25" fill="#4299e1" stroke="#ffffff" stroke-width="3"/>
+    <path d="M15 15 L20 25 L25 15" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="20" y1="10" x2="20" y2="20" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- App title curve -->
+  <path id="curve" d="M 100 400 Q 256 420 412 400" stroke="none" fill="none"/>
+  <text font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ffffff">
+    <textPath href="#curve" startOffset="50%" text-anchor="middle">MYRIENT VIEWER</textPath>
+  </text>
+</svg>
