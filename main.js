@@ -1,15 +1,45 @@
 const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const net = require('net');
 
 // Keep a global reference of the window object
 let mainWindow;
 let serverProcess;
+let actualPort;
 
 const isDev = process.env.ELECTRON_IS_DEV === '1';
-const PORT = process.env.PORT || 3000;
 
-function createWindow() {
+// Function to find an available port
+function findAvailablePort(startPort = 3000) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    
+    server.listen(startPort, (err) => {
+      if (err) {
+        // Port is in use, try next port
+        server.close();
+        findAvailablePort(startPort + 1).then(resolve);
+      } else {
+        // Port is available
+        const port = server.address().port;
+        server.close();
+        resolve(port);
+      }
+    });
+    
+    server.on('error', () => {
+      // Port is in use, try next port
+      findAvailablePort(startPort + 1).then(resolve);
+    });
+  });
+}
+
+async function createWindow() {
+  // Find an available port
+  actualPort = await findAvailablePort(process.env.PORT || 3000);
+  console.log(`Using port: ${actualPort}`);
+  
   // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -27,12 +57,12 @@ function createWindow() {
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default'
   });
 
-  // Start the Express server
+  // Start the Express server with the found port
   startServer();
 
   // Load the app after server starts
   setTimeout(() => {
-    mainWindow.loadURL(`http://localhost:${PORT}`);
+    mainWindow.loadURL(`http://localhost:${actualPort}`);
     
     // Show window when ready to prevent visual flash
     mainWindow.once('ready-to-show', () => {
@@ -67,10 +97,11 @@ function createWindow() {
 
 function startServer() {
   try {
-    console.log('Starting Myrient Viewer server...');
+    console.log(`Starting Myrient Viewer server on port ${actualPort}...`);
     
-    // Set environment for Electron mode
+    // Set environment for Electron mode and port
     process.env.ELECTRON_MODE = '1';
+    process.env.PORT = actualPort.toString();
     
     // Start the Express server in the same process (more reliable for packaged apps)
     const serverPath = app.isPackaged 
@@ -84,7 +115,7 @@ function startServer() {
     const { startServer: startExpressServer } = require(serverPath);
     startExpressServer();
     
-    console.log('Server started successfully');
+    console.log(`Server started successfully on port ${actualPort}`);
   } catch (error) {
     console.error('Error starting server:', error);
     showErrorDialog('Startup Error', `Failed to start the server: ${error.message}`);
@@ -98,140 +129,8 @@ function stopServer() {
 }
 
 function createMenu() {
-  const template = [
-    ...(process.platform === 'darwin' ? [{
-      label: app.getName(),
-      submenu: [
-        { role: 'about' },
-        { type: 'separator' },
-        { role: 'services' },
-        { type: 'separator' },
-        { role: 'hide' },
-        { role: 'hideothers' },
-        { role: 'unhide' },
-        { type: 'separator' },
-        { role: 'quit' }
-      ]
-    }] : []),
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Clear Queue',
-          click: () => {
-            mainWindow.webContents.executeJavaScript('app.clearQueue()');
-          }
-        },
-        { type: 'separator' },
-        ...(process.platform !== 'darwin' ? [{ role: 'quit' }] : [])
-      ]
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectall' }
-      ]
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'actualSize' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    },
-    {
-      label: 'Navigate',
-      submenu: [
-        {
-          label: 'Back',
-          accelerator: 'CmdOrCtrl+Left',
-          click: () => {
-            mainWindow.webContents.goBack();
-          }
-        },
-        {
-          label: 'Forward',
-          accelerator: 'CmdOrCtrl+Right',
-          click: () => {
-            mainWindow.webContents.goForward();
-          }
-        },
-        {
-          label: 'Home',
-          accelerator: 'CmdOrCtrl+H',
-          click: () => {
-            mainWindow.webContents.executeJavaScript('app.loadDirectory("")');
-          }
-        },
-        {
-          label: 'Refresh Directory',
-          accelerator: 'F5',
-          click: () => {
-            mainWindow.webContents.executeJavaScript('app.refreshDirectory()');
-          }
-        }
-      ]
-    },
-    {
-      label: 'Window',
-      submenu: [
-        { role: 'minimize' },
-        { role: 'close' },
-        ...(process.platform === 'darwin' ? [
-          { type: 'separator' },
-          { role: 'front' },
-          { type: 'separator' },
-          { role: 'window' }
-        ] : [])
-      ]
-    },
-    {
-      label: 'Help',
-      submenu: [
-        {
-          label: 'About Myrient Viewer',
-          click: () => {
-            dialog.showMessageBox(mainWindow, {
-              type: 'info',
-              title: 'About Myrient Viewer',
-              message: 'Myrient Viewer',
-              detail: `Version: ${app.getVersion()}\n\nA desktop application for browsing Myrient file structure and managing download queues.\n\nBuilt with Electron and Node.js.`
-            });
-          }
-        },
-        {
-          label: 'Visit Myrient',
-          click: () => {
-            shell.openExternal('https://myrient.erista.me/');
-          }
-        },
-        { type: 'separator' },
-        {
-          label: 'Open DevTools',
-          accelerator: 'F12',
-          click: () => {
-            mainWindow.webContents.toggleDevTools();
-          }
-        }
-      ]
-    }
-  ];
-
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  // Remove all menu dropdowns for a cleaner interface
+  Menu.setApplicationMenu(null);
 }
 
 function showErrorDialog(title, content) {
@@ -239,13 +138,13 @@ function showErrorDialog(title, content) {
 }
 
 // This method will be called when Electron has finished initialization
-app.whenReady().then(() => {
-  createWindow();
+app.whenReady().then(async () => {
+  await createWindow();
 
-  app.on('activate', () => {
+  app.on('activate', async () => {
     // On macOS, re-create a window when the dock icon is clicked
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      await createWindow();
     }
   });
 });
