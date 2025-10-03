@@ -108,7 +108,11 @@ class QueueService {
     script += '# Generated wget download script\n';
     script += '# Created: ' + new Date().toISOString() + '\n\n';
     script += 'set -e\n\n';
-    script += 'echo "Starting download of ' + this.queue.length + ' files..."\n\n';
+    script += '# Create downloads directory\n';
+    script += 'DOWNLOAD_DIR="downloads"\n';
+    script += 'mkdir -p "$DOWNLOAD_DIR"\n';
+    script += 'cd "$DOWNLOAD_DIR"\n\n';
+    script += 'echo "Starting download of ' + this.queue.length + ' files into $DOWNLOAD_DIR directory..."\n\n';
 
     this.queue.forEach((item, index) => {
       const safeFilename = this.sanitizeFilename(item.name);
@@ -122,6 +126,7 @@ class QueueService {
     });
 
     script += 'echo "Download script completed!"\n';
+    script += 'echo "All files downloaded to: $(pwd)"\n';
     
     return script;
   }
@@ -131,7 +136,11 @@ class QueueService {
     script += '# Generated curl download script\n';
     script += '# Created: ' + new Date().toISOString() + '\n\n';
     script += 'set -e\n\n';
-    script += 'echo "Starting download of ' + this.queue.length + ' files..."\n\n';
+    script += '# Create downloads directory\n';
+    script += 'DOWNLOAD_DIR="downloads"\n';
+    script += 'mkdir -p "$DOWNLOAD_DIR"\n';
+    script += 'cd "$DOWNLOAD_DIR"\n\n';
+    script += 'echo "Starting download of ' + this.queue.length + ' files into $DOWNLOAD_DIR directory..."\n\n';
 
     this.queue.forEach((item, index) => {
       const safeFilename = this.sanitizeFilename(item.name);
@@ -145,6 +154,7 @@ class QueueService {
     });
 
     script += 'echo "Download script completed!"\n';
+    script += 'echo "All files downloaded to: $(pwd)"\n';
     
     return script;
   }
@@ -188,17 +198,27 @@ class QueueService {
 
     const units = {
       'B': 1,
+      'K': 1024,
       'KB': 1024,
+      'M': 1024 * 1024,
       'MB': 1024 * 1024,
+      'G': 1024 * 1024 * 1024,
       'GB': 1024 * 1024 * 1024,
+      'T': 1024 * 1024 * 1024 * 1024,
       'TB': 1024 * 1024 * 1024 * 1024
     };
 
-    const match = sizeStr.toString().match(/^([\d.]+)\s*([KMGT]?B)$/i);
+    // Support formats like: "32K", "1.5M", "650 MB", "1.2 GB", "1024", "1024 bytes"
+    const match = sizeStr.toString().trim().match(/^([\d.]+)\s*([KMGT]?B?|bytes?)?$/i);
     if (!match) return 0;
 
     const value = parseFloat(match[1]);
-    const unit = match[2].toUpperCase();
+    let unit = (match[2] || 'B').toUpperCase();
+    
+    // Handle "bytes" as "B"
+    if (unit === 'BYTES' || unit === 'BYTE') {
+      unit = 'B';
+    }
 
     return Math.round(value * (units[unit] || 1));
   }
