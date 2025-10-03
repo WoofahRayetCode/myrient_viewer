@@ -1,6 +1,7 @@
 class QueueService {
   constructor() {
     this.queue = [];
+    this.currentPath = '';
   }
 
   getQueue() {
@@ -9,6 +10,26 @@ class QueueService {
       count: this.queue.length,
       totalSize: this.calculateTotalSize()
     };
+  }
+
+  setCurrentPath(path) {
+    this.currentPath = path || '';
+  }
+
+  getFolderName() {
+    if (!this.currentPath) return 'downloads';
+    
+    // Extract the last part of the path as folder name
+    const pathParts = this.currentPath.split('/').filter(part => part.length > 0);
+    if (pathParts.length === 0) return 'downloads';
+    
+    // Use the last folder name, sanitized for filesystem
+    const folderName = pathParts[pathParts.length - 1]
+      .replace(/[^a-zA-Z0-9\-_]/g, '_') // Replace invalid chars with underscore
+      .replace(/_{2,}/g, '_')           // Replace multiple underscores with single
+      .replace(/^_|_$/g, '');          // Remove leading/trailing underscores
+    
+    return folderName || 'downloads';
   }
 
   addToQueue(item) {
@@ -104,12 +125,14 @@ class QueueService {
   }
 
   generateWgetScript() {
+    const folderName = this.getFolderName();
     let script = '#!/bin/bash\n';
     script += '# Generated wget download script\n';
-    script += '# Created: ' + new Date().toISOString() + '\n\n';
+    script += '# Created: ' + new Date().toISOString() + '\n';
+    script += '# Source folder: ' + (this.currentPath || '/') + '\n\n';
     script += 'set -e\n\n';
     script += '# Create downloads directory\n';
-    script += 'DOWNLOAD_DIR="downloads"\n';
+    script += `DOWNLOAD_DIR="${folderName}"\n`;
     script += 'mkdir -p "$DOWNLOAD_DIR"\n';
     script += 'cd "$DOWNLOAD_DIR"\n\n';
     script += 'echo "Starting download of ' + this.queue.length + ' files into $DOWNLOAD_DIR directory..."\n\n';
@@ -132,12 +155,14 @@ class QueueService {
   }
 
   generateCurlScript() {
+    const folderName = this.getFolderName();
     let script = '#!/bin/bash\n';
     script += '# Generated curl download script\n';
-    script += '# Created: ' + new Date().toISOString() + '\n\n';
+    script += '# Created: ' + new Date().toISOString() + '\n';
+    script += '# Source folder: ' + (this.currentPath || '/') + '\n\n';
     script += 'set -e\n\n';
     script += '# Create downloads directory\n';
-    script += 'DOWNLOAD_DIR="downloads"\n';
+    script += `DOWNLOAD_DIR="${folderName}"\n`;
     script += 'mkdir -p "$DOWNLOAD_DIR"\n';
     script += 'cd "$DOWNLOAD_DIR"\n\n';
     script += 'echo "Starting download of ' + this.queue.length + ' files into $DOWNLOAD_DIR directory..."\n\n';
@@ -171,26 +196,37 @@ class QueueService {
   calculateTotalSize() {
     let totalBytes = 0;
     let hasUnknownSizes = false;
+    let hasKnownSizes = false;
 
     this.queue.forEach(item => {
-      if (item.size && item.size !== 'Unknown' && item.size !== '-') {
+      if (item.size && item.size !== 'Unknown' && item.size !== '-' && item.size.trim() !== '') {
         const bytes = this.parseSizeToBytes(item.size);
         if (bytes > 0) {
           totalBytes += bytes;
+          hasKnownSizes = true;
         } else {
+          // Size string exists but couldn't be parsed
           hasUnknownSizes = true;
         }
       } else {
+        // No size information available
         hasUnknownSizes = true;
       }
     });
 
-    if (totalBytes === 0) {
+    // If we have no items in queue
+    if (this.queue.length === 0) {
       return 'Unknown';
     }
 
-    const formatted = this.formatBytes(totalBytes);
-    return hasUnknownSizes ? `~${formatted}+` : formatted;
+    // If we have some known sizes, show the total
+    if (hasKnownSizes) {
+      const formatted = this.formatBytes(totalBytes);
+      return hasUnknownSizes ? `~${formatted}+` : formatted;
+    }
+
+    // If all sizes are unknown/unparseable, but we have items
+    return hasUnknownSizes ? `${this.queue.length} items (sizes unknown)` : 'Unknown';
   }
 
   parseSizeToBytes(sizeStr) {
