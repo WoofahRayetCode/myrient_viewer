@@ -59,10 +59,15 @@ app.get('/api/queue', (req, res) => {
 });
 
 app.post('/api/queue/add', (req, res) => {
-  const { url, name, size } = req.body;
+  const { url, name, size, currentPath } = req.body;
   
   if (!url || !name) {
     return res.status(400).json({ error: 'URL and name are required' });
+  }
+  
+  // Set the current path for folder naming
+  if (currentPath !== undefined) {
+    queueService.setCurrentPath(currentPath);
   }
   
   const item = queueService.addToQueue({ url, name, size });
