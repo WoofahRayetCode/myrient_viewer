@@ -3,6 +3,10 @@
 # Portable Application Builder for Myrient Viewer
 echo "📦 Building Portable Myrient Viewer Applications..."
 
+# Update version to current date
+echo "🗓️ Updating version to current date..."
+node update-version.js
+
 # Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
