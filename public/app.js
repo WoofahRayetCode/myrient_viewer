@@ -1,6 +1,7 @@
 class MyrientViewer {
     constructor() {
         this.currentPath = '';
+        this.currentItems = [];
         this.queue = [];
         this.isQueueVisible = false;
         this.isDesktop = false;
@@ -18,6 +19,10 @@ class MyrientViewer {
         this.breadcrumb = document.getElementById('breadcrumb');
         this.browserStats = document.getElementById('browser-stats');
         this.searchInput = document.getElementById('search-input');
+        
+        // Region filter elements
+        this.regionFilters = document.getElementById('region-filters');
+        this.clearFiltersBtn = document.getElementById('clear-filters-btn');
         
         // Queue elements
         this.queueSidebar = document.getElementById('queue-sidebar');
@@ -43,6 +48,15 @@ class MyrientViewer {
         // Browser controls
         document.getElementById('refresh-btn').addEventListener('click', () => this.refreshDirectory());
         this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        
+        // Region filter controls
+        this.clearFiltersBtn.addEventListener('click', () => this.clearAllFilters());
+        
+        // Add event listeners to all region filter checkboxes
+        const regionCheckboxes = document.querySelectorAll('#region-filters input[type="checkbox"]');
+        regionCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => this.applyRegionFilters());
+        });
         
         // Export buttons
         document.querySelectorAll('.export-btn').forEach(btn => {
@@ -77,7 +91,10 @@ class MyrientViewer {
     renderDirectory(data) {
         this.fileList.innerHTML = '';
         
-        if (data.items.length === 0) {
+        // Store current items for re-rendering when queue updates
+        this.currentItems = data.items || [];
+        
+        if (this.currentItems.length === 0) {
             this.fileList.innerHTML = `
                 <div class="loading-spinner">
                     <span>No files found in this directory</span>
@@ -86,7 +103,7 @@ class MyrientViewer {
             return;
         }
 
-        data.items.forEach(item => {
+        this.currentItems.forEach(item => {
             const fileElement = this.createFileElement(item);
             this.fileList.appendChild(fileElement);
         });
@@ -379,24 +396,27 @@ class MyrientViewer {
     }
 
     handleSearch(query) {
-        const items = Array.from(this.fileList.querySelectorAll('.file-item'));
-        
-        if (!query.trim()) {
-            items.forEach(item => item.style.display = 'flex');
-            return;
-        }
+        // Apply both search and region filters
+        this.applyRegionFilters();
+    }
 
-        const searchTerm = query.toLowerCase();
-        items.forEach(item => {
-            const fileName = item.querySelector('.file-name').textContent.toLowerCase();
-            item.style.display = fileName.includes(searchTerm) ? 'flex' : 'none';
+    clearAllFilters() {
+        // Uncheck all region filter checkboxes
+        const regionCheckboxes = document.querySelectorAll('#region-filters input[type="checkbox"]');
+        regionCheckboxes.forEach(checkbox => {
+            checkbox.checked = true; // Check all to show everything
         });
+        
+        // Clear search input
+        this.searchInput.value = '';
+        
+        // Apply filters (which will show all items)
+        this.applyRegionFilters();
     }
 
     getCurrentItems() {
-        // This would need to be populated from the last directory load
-        // For now, return empty array as it's used for re-rendering
-        return [];
+        // Return the stored current directory items for re-rendering
+        return this.currentItems || [];
     }
 
     showLoading() {
@@ -456,6 +476,84 @@ class MyrientViewer {
         } catch (error) {
             console.log('Could not fetch app info (probably running in web mode)');
         }
+    }
+
+    detectRegion(fileName) {
+        if (!fileName) return 'Other';
+
+        const name = fileName.toLowerCase();
+        
+        // Common region patterns in ROM filenames
+        const regionPatterns = {
+            'USA': [
+                /\(usa?\)/i, /\(us\)/i, /\(u\)/i, /\(ntsc\)/i,
+                /usa/i, /america/i, /united states/i
+            ],
+            'Europe': [
+                /\(eur?o?p?e?\)/i, /\(e\)/i, /\(pal\)/i, /\(uk\)/i,
+                /\(germany\)/i, /\(france\)/i, /\(spain\)/i, /\(italy\)/i,
+                /europe/i, /european/i, /britain/i
+            ],
+            'Japan': [
+                /\(japan\)/i, /\(jp\)/i, /\(j\)/i, /\(ntsc-j\)/i,
+                /japan/i, /japanese/i, /nihon/i, /nippon/i
+            ],
+            'World': [
+                /\(world\)/i, /\(w\)/i, /\(wor\)/i, /\(international\)/i,
+                /world/i, /worldwide/i, /global/i
+            ]
+        };
+
+        // Check for specific region patterns
+        for (const [region, patterns] of Object.entries(regionPatterns)) {
+            for (const pattern of patterns) {
+                if (pattern.test(name)) {
+                    return region;
+                }
+            }
+        }
+
+        // If no specific region found, categorize as "Other"
+        return 'Other';
+    }
+
+    applyRegionFilters() {
+        const items = Array.from(this.fileList.querySelectorAll('.file-item'));
+        const activeFilters = this.getActiveRegionFilters();
+        
+        // If all filters are checked or none are checked, show all items
+        if (activeFilters.length === 0 || activeFilters.length === 5) {
+            items.forEach(item => {
+                // Only show if it also passes the search filter
+                const isVisible = this.passesSearchFilter(item);
+                item.style.display = isVisible ? 'flex' : 'none';
+            });
+            return;
+        }
+
+        items.forEach(item => {
+            const fileName = item.querySelector('.file-name').textContent;
+            const region = this.detectRegion(fileName);
+            const passesRegionFilter = activeFilters.includes(region);
+            const passesSearchFilter = this.passesSearchFilter(item);
+            
+            item.style.display = (passesRegionFilter && passesSearchFilter) ? 'flex' : 'none';
+        });
+    }
+
+    getActiveRegionFilters() {
+        const checkboxes = document.querySelectorAll('#region-filters input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    passesSearchFilter(item) {
+        const searchInput = document.getElementById('search-input');
+        const query = searchInput.value.trim();
+        
+        if (!query) return true;
+        
+        const fileName = item.querySelector('.file-name').textContent.toLowerCase();
+        return fileName.includes(query.toLowerCase());
     }
 }
 
