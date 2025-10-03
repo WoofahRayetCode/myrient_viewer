@@ -30,7 +30,6 @@ class MyrientViewer {
         this.queueCount = document.getElementById('queue-count');
         this.queueList = document.getElementById('queue-list');
         this.queueItemsCount = document.getElementById('queue-items-count');
-        this.queueTotalSize = document.getElementById('queue-total-size');
         
         // Loading
         this.loadingOverlay = document.getElementById('loading-overlay');
@@ -187,7 +186,7 @@ class MyrientViewer {
             const response = await fetch('/api/queue/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, name, size })
+                body: JSON.stringify({ url, name, size, currentPath: this.currentPath })
             });
 
             if (!response.ok) {
@@ -197,7 +196,7 @@ class MyrientViewer {
 
             await this.refreshQueue();
             this.showToast(`Added "${name}" to queue`, 'success');
-            this.renderDirectory({ items: this.getCurrentItems() });
+            this.updateFileItemButtons();
             
         } catch (error) {
             console.error('Error adding to queue:', error);
@@ -218,7 +217,7 @@ class MyrientViewer {
 
             await this.refreshQueue();
             this.showToast(`Removed "${name}" from queue`, 'success');
-            this.renderDirectory({ items: this.getCurrentItems() });
+            this.updateFileItemButtons();
             
         } catch (error) {
             console.error('Error removing from queue:', error);
@@ -243,7 +242,6 @@ class MyrientViewer {
     updateQueueDisplay(queueData) {
         this.queueCount.textContent = queueData.count;
         this.queueItemsCount.textContent = queueData.count;
-        this.queueTotalSize.textContent = queueData.totalSize;
 
         if (queueData.count === 0) {
             this.queueList.innerHTML = `
@@ -297,7 +295,7 @@ class MyrientViewer {
 
             await this.refreshQueue();
             this.showToast('Removed from queue', 'success');
-            this.loadDirectory(this.currentPath); // Refresh current view
+            this.updateFileItemButtons();
             
         } catch (error) {
             console.error('Error removing from queue:', error);
@@ -319,7 +317,7 @@ class MyrientViewer {
 
             await this.refreshQueue();
             this.showToast('Queue cleared', 'success');
-            this.loadDirectory(this.currentPath); // Refresh current view
+            this.updateFileItemButtons();
             
         } catch (error) {
             console.error('Error clearing queue:', error);
@@ -517,33 +515,95 @@ class MyrientViewer {
         return 'Other';
     }
 
+    detectRevision(fileName) {
+        if (!fileName) return false;
+
+        const name = fileName.toLowerCase();
+        
+        // Common revision patterns in ROM filenames
+        const revisionPatterns = [
+            /\(rev\s*[a-z0-9]+\)/i,           // (Rev A), (Rev 1), (Rev B1)
+            /\(rev[a-z0-9]+\)/i,              // (RevA), (Rev1)
+            /\(revision\s*[a-z0-9]+\)/i,      // (Revision A), (Revision 1)
+            /\(v\d+\.\d+\)/i,                 // (v1.1), (v2.0)
+            /\(version\s*\d+\.\d+\)/i,        // (Version 1.1)
+            /\(alt\)/i,                       // (Alt)
+            /\(alternate\)/i,                 // (Alternate)
+            /\(a\d+\)/i,                      // (A1), (A2) - alternate versions
+            /\(b\d+\)/i,                      // (B1), (B2) - beta versions
+            /\(beta\)/i,                      // (Beta)
+            /\(alpha\)/i,                     // (Alpha)
+            /\(demo\)/i,                      // (Demo)
+            /\(prototype\)/i,                 // (Prototype)
+            /\(proto\)/i,                     // (Proto)
+            /\(sample\)/i,                    // (Sample)
+            /\(test\)/i,                      // (Test)
+            /\(debug\)/i,                     // (Debug)
+            /\(kiosk\)/i,                     // (Kiosk)
+            /\(preview\)/i,                   // (Preview)
+            /\(pre-release\)/i,               // (Pre-release)
+            /\(pre\)/i,                       // (Pre)
+            /\(trial\)/i,                     // (Trial)
+            /\(unl\)/i,                       // (Unl) - unlicensed
+            /\(pirate\)/i,                    // (Pirate)
+            /\(hack\)/i,                      // (Hack)
+            /\(trainer\)/i,                   // (Trainer)
+            /\(fixed\)/i,                     // (Fixed)
+            /\(cracked\)/i,                   // (Cracked)
+            /\(translated\)/i,                // (Translated)
+            /\(translation\)/i,               // (Translation)
+            /\(t-\w+\)/i,                     // (T-Eng), (T-Spanish)
+        ];
+
+        // Check for revision patterns
+        return revisionPatterns.some(pattern => pattern.test(name));
+    }
+
     applyRegionFilters() {
         const items = Array.from(this.fileList.querySelectorAll('.file-item'));
         const activeFilters = this.getActiveRegionFilters();
+        const hideRevisions = this.isRevisionFilterActive();
         
-        // If all filters are checked or none are checked, show all items
-        if (activeFilters.length === 0 || activeFilters.length === 5) {
-            items.forEach(item => {
-                // Only show if it also passes the search filter
-                const isVisible = this.passesSearchFilter(item);
-                item.style.display = isVisible ? 'flex' : 'none';
-            });
-            return;
-        }
+        // Count region filters (excluding revision filter)
+        const regionFilters = activeFilters.filter(f => f !== 'revisions');
+        
+        // If all region filters are checked or none are checked, show all items based on region
+        const showAllRegions = regionFilters.length === 0 || regionFilters.length === 5;
 
         items.forEach(item => {
             const fileName = item.querySelector('.file-name').textContent;
-            const region = this.detectRegion(fileName);
-            const passesRegionFilter = activeFilters.includes(region);
+            
+            // Check region filter
+            let passesRegionFilter = true;
+            if (!showAllRegions) {
+                const region = this.detectRegion(fileName);
+                passesRegionFilter = regionFilters.includes(region);
+            }
+            
+            // Check revision filter
+            let passesRevisionFilter = true;
+            if (hideRevisions) {
+                const isRevision = this.detectRevision(fileName);
+                passesRevisionFilter = !isRevision; // Hide if it's a revision
+            }
+            
+            // Check search filter
             const passesSearchFilter = this.passesSearchFilter(item);
             
-            item.style.display = (passesRegionFilter && passesSearchFilter) ? 'flex' : 'none';
+            // Show item only if it passes all filters
+            const shouldShow = passesRegionFilter && passesRevisionFilter && passesSearchFilter;
+            item.style.display = shouldShow ? 'flex' : 'none';
         });
     }
 
     getActiveRegionFilters() {
         const checkboxes = document.querySelectorAll('#region-filters input[type="checkbox"]:checked');
         return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    isRevisionFilterActive() {
+        const revisionCheckbox = document.getElementById('filter-revisions');
+        return revisionCheckbox && revisionCheckbox.checked;
     }
 
     passesSearchFilter(item) {
@@ -554,6 +614,40 @@ class MyrientViewer {
         
         const fileName = item.querySelector('.file-name').textContent.toLowerCase();
         return fileName.includes(query.toLowerCase());
+    }
+
+    updateFileItemButtons() {
+        // Update the add/remove buttons for all file items based on current queue state
+        const fileItems = document.querySelectorAll('.file-item');
+        
+        fileItems.forEach(fileItem => {
+            const fileNameElement = fileItem.querySelector('.file-name');
+            if (!fileNameElement) return;
+            
+            const fileName = fileNameElement.textContent;
+            
+            // Find the corresponding item in currentItems to get the URL
+            const currentItem = this.currentItems.find(item => item.name === fileName);
+            if (!currentItem || currentItem.isDirectory) return;
+            
+            const isInQueue = this.queue.some(qItem => qItem.url === currentItem.url);
+            
+            // Find and update the button
+            const button = fileItem.querySelector('.file-actions button');
+            if (button) {
+                if (isInQueue) {
+                    button.className = 'btn btn-xs btn-secondary';
+                    button.textContent = '✓';
+                    button.title = 'Remove from queue';
+                    button.onclick = () => this.removeFromQueue(currentItem.url, currentItem.name, currentItem.size);
+                } else {
+                    button.className = 'btn btn-xs btn-success';
+                    button.textContent = '+';
+                    button.title = 'Add to queue';
+                    button.onclick = () => this.addToQueue(currentItem.url, currentItem.name, currentItem.size);
+                }
+            }
+        });
     }
 }
 
