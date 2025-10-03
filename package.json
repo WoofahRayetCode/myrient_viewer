@@ -1,6 +1,6 @@
 {
   "name": "myrient-viewer",
-  "version": "1.0.0",
+  "version": "2025.10.03",
   "description": "A Node.js application for browsing Myrient file structure and managing download queues",
   "main": "main.js",
   "scripts": {
@@ -9,11 +9,19 @@
     "electron": "electron .",
     "electron-dev": "ELECTRON_IS_DEV=1 electron .",
     "desktop": "npm run build-desktop",
+    "update-version": "node update-version.js",
+    "prebuild-desktop": "npm run update-version",
     "build-desktop": "npx electron-builder",
+    "prebuild-desktop-all": "npm run update-version",
     "build-desktop-all": "npx electron-builder --mac --win --linux",
+    "prebuild-portable": "npm run update-version",
     "build-portable": "npx electron-builder --win portable --linux AppImage --mac zip",
-    "build-pkg": "npx pkg server-only.js --out-path dist-pkg/",
+    "prebuild-pkg": "npm run update-version",
+    "build-pkg": "npx pkg server-only.js --targets node18-linux-x64 --out-path dist-pkg/",
+    "postbuild-pkg": "node rename-pkg-outputs.js",
+    "prebuild-pkg-all": "npm run update-version",
     "build-pkg-all": "npx pkg server-only.js --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --out-path dist-pkg/",
+    "postbuild-pkg-all": "node rename-pkg-outputs.js",
     "pack-desktop": "npx electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -62,11 +70,15 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
-          "target": "portable", 
-          "arch": ["x64"]
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/icon.ico"
@@ -75,11 +87,15 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "tar.gz",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Utility",
@@ -89,11 +105,17 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "category": "public.app-category.utilities",
@@ -114,7 +136,7 @@
   "pkg": {
     "scripts": [
       "server-only.js",
-      "server.js", 
+      "server.js",
       "services/**/*.js"
     ],
     "assets": [
@@ -123,7 +145,7 @@
     ],
     "targets": [
       "node18-win-x64",
-      "node18-linux-x64", 
+      "node18-linux-x64",
       "node18-macos-x64"
     ],
     "outputPath": "dist-pkg",
