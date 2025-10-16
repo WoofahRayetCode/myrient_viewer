@@ -32,3 +32,37 @@ assets/icon.icns
 *.tar.gz
 checksums.txt
 .fake
+
+# Electron-builder metadata
+*.blockmap
+builder-debug.yml
+builder-effective-config.yaml
+latest-*.yml
+
+# Unpacked build directories
+*-unpacked/
+
+# macOS
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Windows
+desktop.ini
+ehthumbs.db
+
+# Linux
+*~
+.directory
+
+# IDEs and Editors
+.idea/
+*.swp
+*.swo
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
