@@ -1,6 +1,6 @@
 {
   "name": "myrient-viewer",
-  "version": "2025.10.03",
+  "version": "2025.10.16",
   "description": "A Node.js application for browsing Myrient file structure and managing download queues",
   "main": "main.js",
   "scripts": {
