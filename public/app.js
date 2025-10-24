@@ -344,14 +344,24 @@ class MyrientViewer {
                 );
             } else {
                 const script = await response.text();
+                const filename = `download_script_${Date.now()}.sh`;
                 this.downloadFile(
                     script,
-                    `download_${format}_${Date.now()}.sh`,
+                    filename,
                     'text/plain'
                 );
+                
+                // Show instructions for running the script
+                setTimeout(() => {
+                    this.showToast(
+                        `Script downloaded! Run: chmod +x ${filename} && ./${filename}`,
+                        'info',
+                        8000
+                    );
+                }, 500);
             }
 
-            this.showToast(`Exported ${this.queue.length} items as ${format}`, 'success');
+            this.showToast(`Exported ${this.queue.length} items`, 'success');
             
         } catch (error) {
             console.error('Error exporting queue:', error);
@@ -425,7 +435,7 @@ class MyrientViewer {
         this.loadingOverlay.classList.add('hidden');
     }
 
-    showToast(message, type = 'info') {
+    showToast(message, type = 'info', duration = 4000) {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
@@ -434,7 +444,7 @@ class MyrientViewer {
         
         setTimeout(() => {
             toast.remove();
-        }, 4000);
+        }, duration);
     }
 
     escapeHtml(text) {
