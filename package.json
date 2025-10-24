@@ -1,6 +1,6 @@
 {
   "name": "myrient-viewer",
-  "version": "2025.10.16",
+  "version": "2025.10.24",
   "description": "A Node.js application for browsing Myrient file structure and managing download queues",
   "main": "main.js",
   "scripts": {
@@ -10,16 +10,18 @@
     "electron-dev": "ELECTRON_IS_DEV=1 electron .",
     "desktop": "npm run build-desktop",
     "update-version": "node update-version.js",
-    "prebuild-desktop": "npm run update-version",
+    "clean": "rm -rf dist dist-portable dist-pkg flatpak-build flatpak-repo *.flatpak",
+    "prebuild-desktop": "npm run clean && npm run update-version",
     "build-desktop": "npx electron-builder",
-    "prebuild-desktop-all": "npm run update-version",
+    "prebuild-desktop-all": "npm run clean && npm run update-version",
     "build-desktop-all": "npx electron-builder --mac --win --linux",
-    "prebuild-portable": "npm run update-version",
+    "prebuild-portable": "npm run clean && npm run update-version",
     "build-portable": "npx electron-builder --win portable --linux AppImage --mac zip",
-    "prebuild-pkg": "npm run update-version",
+    "build-flatpak": "npx electron-builder --linux flatpak",
+    "prebuild-pkg": "npm run clean && npm run update-version",
     "build-pkg": "npx pkg server-only.js --targets node18-linux-x64 --out-path dist-pkg/",
     "postbuild-pkg": "node rename-pkg-outputs.js",
-    "prebuild-pkg-all": "npm run update-version",
+    "prebuild-pkg-all": "npm run clean && npm run update-version",
     "build-pkg-all": "npx pkg server-only.js --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --out-path dist-pkg/",
     "postbuild-pkg-all": "node rename-pkg-outputs.js",
     "pack-desktop": "npx electron-builder --dir",
@@ -96,10 +98,21 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "flatpak",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Utility",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "desktop": {
+        "Name": "Myrient Viewer",
+        "Comment": "Browse and download files from Myrient file archive",
+        "Categories": "Network;FileTransfer;Utility;"
+      }
     },
     "mac": {
       "target": [
