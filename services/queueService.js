@@ -110,10 +110,9 @@ class QueueService {
           }))
         };
 
-      case 'wget':
-        return this.generateWgetScript();
-
       case 'curl':
+      case 'script':
+      case 'bash':
         return this.generateCurlScript();
 
       case 'urls':
@@ -124,42 +123,13 @@ class QueueService {
     }
   }
 
-  generateWgetScript() {
-    const folderName = this.getFolderName();
-    let script = '#!/bin/bash\n';
-    script += '# Generated wget download script\n';
-    script += '# Created: ' + new Date().toISOString() + '\n';
-    script += '# Source folder: ' + (this.currentPath || '/') + '\n\n';
-    script += 'set -e\n\n';
-    script += '# Create downloads directory\n';
-    script += `DOWNLOAD_DIR="${folderName}"\n`;
-    script += 'mkdir -p "$DOWNLOAD_DIR"\n';
-    script += 'cd "$DOWNLOAD_DIR"\n\n';
-    script += 'echo "Starting download of ' + this.queue.length + ' files into $DOWNLOAD_DIR directory..."\n\n';
-
-    this.queue.forEach((item, index) => {
-      const safeFilename = this.sanitizeFilename(item.name);
-      script += `echo "Downloading ${index + 1}/${this.queue.length}: ${item.name}"\n`;
-      script += `wget --continue --timeout=30 --tries=3 "${item.url}" -O "${safeFilename}"\n`;
-      script += `if [ $? -eq 0 ]; then\n`;
-      script += `    echo "✓ Successfully downloaded: ${item.name}"\n`;
-      script += `else\n`;
-      script += `    echo "✗ Failed to download: ${item.name}"\n`;
-      script += `fi\n\n`;
-    });
-
-    script += 'echo "Download script completed!"\n';
-    script += 'echo "All files downloaded to: $(pwd)"\n';
-    
-    return script;
-  }
-
   generateCurlScript() {
     const folderName = this.getFolderName();
     let script = '#!/bin/bash\n';
-    script += '# Generated curl download script\n';
+    script += '# Myrient Viewer Download Script\n';
     script += '# Created: ' + new Date().toISOString() + '\n';
-    script += '# Source folder: ' + (this.currentPath || '/') + '\n\n';
+    script += '# Source folder: ' + (this.currentPath || '/') + '\n';
+    script += '# Files: ' + this.queue.length + '\n\n';
     script += 'set -e\n\n';
     script += '# Create downloads directory\n';
     script += `DOWNLOAD_DIR="${folderName}"\n`;
