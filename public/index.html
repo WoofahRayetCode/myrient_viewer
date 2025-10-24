@@ -111,10 +111,12 @@
                         <div class="queue-export" id="queue-export">
                             <h4>Export Options</h4>
                             <div class="export-buttons">
-                                <button class="btn btn-primary export-btn" data-format="wget">Wget Script</button>
-                                <button class="btn btn-primary export-btn" data-format="curl">Curl Script</button>
-                                <button class="btn btn-secondary export-btn" data-format="json">JSON</button>
+                                <button class="btn btn-primary export-btn" data-format="curl" title="Download script with curl (reliable)">Download Script</button>
+                                <button class="btn btn-secondary export-btn" data-format="json" title="Export as JSON">JSON</button>
                             </div>
+                            <small style="color: #888; margin-top: 8px; display: block;">
+                                💡 Tip: After download, run: <code>chmod +x download_script.sh && ./download_script.sh</code>
+                            </small>
                         </div>
                     </div>
                 </div>
