@@ -52,9 +52,17 @@ echo -e "${BLUE}🔍 Checking build tools...${NC}"
 check_npm_package electron-builder || exit 1
 check_npm_package pkg || exit 1
 
-# Create output directories
+# Clean and create fresh output directories
+echo -e "${BLUE}🧹 Cleaning old build artifacts...${NC}"
+rm -rf dist
+rm -rf dist-portable
+rm -rf dist-pkg
+echo -e "${GREEN}✓ Cleaned dist/, dist-portable/, dist-pkg/${NC}"
+
+echo -e "${BLUE}📁 Creating fresh output directories...${NC}"
 mkdir -p dist-portable
 mkdir -p dist-pkg
+echo -e "${GREEN}✓ Created fresh directories${NC}"
 
 echo ""
 echo -e "${BLUE}🏗️  Available portable build options:${NC}"
