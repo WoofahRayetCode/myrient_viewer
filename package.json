@@ -9,7 +9,7 @@
     "electron": "electron .",
     "electron-dev": "ELECTRON_IS_DEV=1 electron .",
     "desktop": "npm run build-desktop",
-    "update-version": "node update-version.js",
+    "update-version": "node scripts/build/update-version.js",
     "clean": "rm -rf dist dist-portable dist-pkg flatpak-build flatpak-repo *.flatpak",
     "prebuild-desktop": "npm run clean && npm run update-version",
     "build-desktop": "npx electron-builder",
@@ -20,10 +20,10 @@
     "build-flatpak": "npx electron-builder --linux flatpak",
     "prebuild-pkg": "npm run clean && npm run update-version",
     "build-pkg": "npx pkg server-only.js --targets node18-linux-x64 --out-path dist-pkg/",
-    "postbuild-pkg": "node rename-pkg-outputs.js",
+    "postbuild-pkg": "node scripts/build/rename-pkg-outputs.js",
     "prebuild-pkg-all": "npm run clean && npm run update-version",
     "build-pkg-all": "npx pkg server-only.js --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --out-path dist-pkg/",
-    "postbuild-pkg-all": "node rename-pkg-outputs.js",
+    "postbuild-pkg-all": "node scripts/build/rename-pkg-outputs.js",
     "pack-desktop": "npx electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -34,7 +34,7 @@
     "retro-gaming",
     "rom-browser"
   ],
-  "author": "Your Name",
+  "author": "Eric Parsley (WoofahRayetCode)",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
