@@ -17,6 +17,12 @@ build/
 dist-pkg/
 dist-portable/
 
+# Flatpak build artifacts
+flatpak-build/
+flatpak-repo/
+.flatpak-builder/
+*.flatpak
+
 # Electron cache
 .electron/
 
