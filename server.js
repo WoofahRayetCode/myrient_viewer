@@ -95,10 +95,11 @@ app.get('/api/queue/export/:format', (req, res) => {
       case 'json':
         res.json(exportData);
         break;
-      case 'wget':
       case 'curl':
+      case 'script':
+      case 'bash':
         res.setHeader('Content-Type', 'text/plain');
-        res.setHeader('Content-Disposition', `attachment; filename="download_${format}.sh"`);
+        res.setHeader('Content-Disposition', `attachment; filename="download_script.sh"`);
         res.send(exportData);
         break;
       default:
