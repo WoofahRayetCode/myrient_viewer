@@ -1,15 +1,33 @@
+# Dependencies
 node_modules/
+bower_components/
+jspm_packages/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+*.log
+
+# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.env.*.local
+
+# OS files
 .DS_Store
-.vscode/
-*.log
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*~
+.directory
+.AppleDouble
+.LSOverride
 
 # Desktop application build outputs
 dist/
@@ -25,6 +43,8 @@ flatpak-repo/
 
 # Electron cache
 .electron/
+electron-builder.yml
+out/
 
 # PKG cache
 .pkg-cache/
@@ -36,8 +56,19 @@ assets/icon.icns
 
 # Portable build artifacts
 *.tar.gz
+*.zip
 checksums.txt
 .fake
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+*.orig
 
 # Electron-builder metadata
 *.blockmap
@@ -47,21 +78,12 @@ latest-*.yml
 
 # Unpacked build directories
 *-unpacked/
-
-# macOS
-.AppleDouble
-.LSOverride
-Thumbs.db
-
-# Windows
-desktop.ini
-ehthumbs.db
-
-# Linux
-*~
-.directory
+linux-unpacked/
+mac/
+win-unpacked/
 
 # IDEs and Editors
+.vscode/
 .idea/
 *.swp
 *.swo
@@ -72,3 +94,20 @@ ehthumbs.db
 .settings/
 *.sublime-workspace
 *.sublime-project
+.vscode-test/
+.history/
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Debugging
+*.pid
+*.seed
+*.pid.lock
+
+# Runtime data
+pids/
+logs/
+results/
