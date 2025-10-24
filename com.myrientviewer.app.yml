@@ -1,0 +1,68 @@
+# Flatpak manifest for Myrient Viewer
+app-id: com.myrientviewer.app
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '24.08'
+command: run.sh
+separate-locales: false
+
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+  # Wayland access
+  - --socket=wayland
+  # Network access (required for Myrient browsing)
+  - --share=network
+  # File system access for downloads
+  - --filesystem=xdg-download
+  - --filesystem=home
+  # Notification access
+  - --talk-name=org.freedesktop.Notifications
+  # GPU acceleration
+  - --device=dri
+  # Audio/Video (if needed for any media preview)
+  - --socket=pulseaudio
+
+modules:
+  - name: myrient-viewer
+    buildsystem: simple
+    build-options:
+      env:
+        NPM_CONFIG_LOGLEVEL: info
+    build-commands:
+      # Install Node.js dependencies
+      - npm install --production --offline-cache=npm-cache
+      
+      # Create application directory
+      - mkdir -p /app/myrient-viewer
+      
+      # Copy application files
+      - cp -r main.js server.js services public package.json /app/myrient-viewer/
+      - cp -r node_modules /app/myrient-viewer/
+      
+      # Create wrapper script
+      - |
+        cat > /app/bin/run.sh << 'EOF'
+        #!/bin/bash
+        cd /app/myrient-viewer
+        export ELECTRON_IS_DEV=0
+        exec /app/bin/electron main.js "$@"
+        EOF
+      - chmod +x /app/bin/run.sh
+      
+      # Install desktop file and metadata
+      - install -Dm644 com.myrientviewer.app.desktop /app/share/applications/com.myrientviewer.app.desktop
+      - install -Dm644 com.myrientviewer.app.metainfo.xml /app/share/metainfo/com.myrientviewer.app.metainfo.xml
+      
+      # Install icon (use a default if icon doesn't exist)
+      - |
+        if [ -f assets/icon.png ]; then
+          install -Dm644 assets/icon.png /app/share/icons/hicolor/512x512/apps/com.myrientviewer.app.png
+        fi
+      
+    sources:
+      - type: dir
+        path: .
